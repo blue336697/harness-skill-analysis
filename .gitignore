@@ -1,0 +1,11 @@
+node_modules/
+.DS_Store
+Thumbs.db
+bash.exe.stackdump
+.idea/
+.vscode/
+*.swp
+.codegraph/
+experiments/
+repos/
+analysis/open-source-agents/repos/

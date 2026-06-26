@@ -1,0 +1,74 @@
+# 架构约束规则
+
+> [HUMAN-NEEDED] 本文件由团队核心开发在共识会议中填写。
+> 将作为 always 级别规则在每次 AI 会话中加载。
+
+## 分层规则
+
+### 允许的依赖方向
+
+```
+{{LAYER_DIAGRAM_DESCRIPTION}}
+
+例:
+Starter (Controller/API)
+  ↓ 依赖
+Application (Service/DTO/Repository接口)
+  ↓ 依赖
+Infrastructure (Repository实现/外部API)
+  ↓ 依赖
+Common (工具类/常量/异常定义)
+```
+
+### 禁止的依赖方向
+
+- {{FORBIDDEN_DEPENDENCY_1 | 例: Infrastructure 层对象禁止直接暴露到 Starter 层}}
+- {{FORBIDDEN_DEPENDENCY_2 | 例: Application 层 Service 之间禁止循环依赖}}
+- {{FORBIDDEN_DEPENDENCY_3}}
+
+### 数据传递约定
+
+- {{DATA_RULE_1 | 例: Controller 与 Service 之间使用 DTO，Service 内部使用 Domain Object}}
+- {{DATA_RULE_2 | 例: Repository 接口定义在 Application 层，返回值必须是 Domain Object，不能是数据库 Entity}}
+- {{DATA_RULE_3}}
+
+## 模块组织规则
+
+### 包/模块命名
+
+```
+{{PACKAGE_STRUCTURE | 例: com.company.{项目}.{分层}.{业务模块}}}
+```
+
+### 模块内文件组织
+
+```
+{{MODULE_FILE_STRUCTURE | 例:
+src/main/java/com/company/project/
+├── starter/
+│   ├── controller/   # REST API
+│   └── config/       # Spring/框架配置
+├── application/
+│   ├── service/      # 业务逻辑接口+实现
+│   ├── dto/          # 数据传输对象
+│   └── repository/   # 仓储接口（仅接口）
+├── infrastructure/
+│   ├── repository/   # 仓储实现
+│   ├── client/       # 外部 API 调用
+│   └── mapper/       # Entity ↔ Domain 转换
+└── common/
+    ├── exception/    # 异常定义
+    ├── constant/     # 常量
+    └── util/         # 纯工具函数
+}}
+```
+
+## 外部依赖规则
+
+- {{EXTERNAL_DEP_RULE_1 | 例: 第三方 API 调用必须通过 infrastructure/client 层}}
+- {{EXTERNAL_DEP_RULE_2 | 例: 数据库操作必须通过 Repository 接口，禁止直接使用 JDBC Template}}
+
+## 配置管理规则
+
+- {{CONFIG_RULE_1 | 例: 环境相关配置使用 application-{profile}.yml，禁止硬编码}}
+- {{CONFIG_RULE_2 | 例: 业务配置使用配置中心，禁止在代码中写死}}

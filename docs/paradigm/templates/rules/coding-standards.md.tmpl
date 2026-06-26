@@ -1,0 +1,134 @@
+# 编码规范规则
+
+> [HUMAN-NEEDED] 本文件由团队核心开发在共识会议中填写。
+> 将作为 always 级别规则在每次 AI 会话中加载。
+> 每一条规则必须具体到"AI 可以无歧义执行"的程度。
+
+## 函数规范
+
+### 长度限制
+- 单个函数不超过 **{{MAX_FUNCTION_LINES | 50}}** 行（含空行和注释）
+- 超过限制 → 拆分为多个职责单一的小函数
+- 私有辅助函数直接放在调用函数下方
+
+### 参数限制
+- 单个函数不超过 **{{MAX_PARAMS | 4}}** 个参数
+- 超过限制 → 封装为参数对象（DTO/Model）
+- 禁止使用 Map/Dict 作为参数传递（丢失类型安全）
+
+### 返回值
+- 所有函数必须有显式的返回值类型标注
+- 禁止返回 null/None，使用 Optional/Result 包装
+- 集合类型返回值禁止为 null/None，空集合用 Collections.emptyList()
+
+### 控制流
+- 嵌套深度不超过 **{{MAX_NESTING | 4}}** 层
+- 使用提前返回（Guard Clause）减少嵌套
+- 禁止使用标志参数（boolean/enum flag）切换函数行为
+  ```
+  // 禁止
+  process(order, true)  // true 表示什么？？
+
+  // 正确
+  processWithDiscount(order)
+  processWithoutDiscount(order)
+  ```
+
+## 类型规范
+
+### 类型标注
+- 所有变量、参数、返回值必须有明确类型
+- **禁止使用**: Any, unknown, Object, var（无推断类型时）
+- **限制使用**: 泛型通配符（? extends/? super），仅框架兼容必要时使用
+
+### 类型定义
+- 复杂数据结构（3+ 字段）必须定义独立的类型/类
+- 禁止使用 JSONObject/Map<String, Object> 传递结构化数据
+- 所有序列化/反序列化必须有对应的类型定义
+
+### DTO/VO/Entity 分离
+- 数据库 Entity 禁止暴露到 Controller 层
+- 每个层次的数据对象必须独立定义
+- 转换逻辑收口在独立的 Converter/Mapper 中
+
+## 错误处理规范
+
+### 异常抛出
+- 所有可恢复错误必须显式抛出，类型明确
+- catch 块不能为空，不能仅打印日志后忽略
+- 重新抛出的异常必须保留原始堆栈（cause）
+
+### 错误信息
+- 错误消息必须包含：操作描述 + 关键参数 + 失败原因
+  ```
+  // 不好
+  throw new AppException("操作失败")
+
+  // 好
+  throw new AppException("Failed to create order: userId=%s, productId=%s, reason=%s"
+      .formatted(userId, productId, reason))
+  ```
+
+### 外部调用
+- 所有外部 API/数据库/缓存调用必须有 try-catch
+- 调用失败后必须记录请求参数、响应体、耗时
+- Retry 策略仅适用于幂等操作，重试上限 3 次
+
+## 代码清理规范（防止死代码累积）
+
+### 完整替换原则
+- 新实现替换旧实现时，必须在**同一个 PR** 中删除旧代码。禁止"先上新、后删旧"。
+- 删除前用 codegraph_callers 确认无残留引用。如有，先迁移引用再删除。
+- 删除的符号应在提交信息中明确列出（如 `移除: OldOrderService, LegacyConverter`）。
+
+### 同步清理清单
+删除旧代码时，同时清理：
+- [ ] 不再使用的 import 语句
+- [ ] 对应的配置项（注解、XML、YAML、properties）
+- [ ] 已无意义的旧测试文件
+- [ ] CLAUDE.md / CONTEXT.md 中的过期引用
+
+### 禁止
+- **禁止**用注释包裹旧代码（用 git history 追溯）
+- **禁止**删除类但保留其 import 在其他文件
+- **禁止**删除方法但保留其单元测试
+
+## 命名规范
+
+### 通用规则
+| 元素 | 规范 | 示例 |
+|------|------|------|
+| 类/接口 | {{CLASS_NAMING}} | {{CLASS_EXAMPLE}} |
+| 方法/函数 | {{METHOD_NAMING}} | {{METHOD_EXAMPLE}} |
+| 变量 | {{VAR_NAMING}} | {{VAR_EXAMPLE}} |
+| 常量 | {{CONST_NAMING}} | {{CONST_EXAMPLE}} |
+| 包/模块 | {{PACKAGE_NAMING}} | {{PACKAGE_EXAMPLE}} |
+
+### 禁止的命名
+- 禁止拼音、拼音缩写
+- 禁止无意义缩写（ctx 除外）
+- 禁止单字母变量（循环变量 i/j/k 除外）
+- 禁止在名称中包含类型信息（如 userList → users, userMap → userById）
+
+## 注释规范
+
+- 注释使用 **{{COMMENT_LANGUAGE | 英文}}**
+- 公开 API/接口必须有文档注释（docstring/Javadoc/TSDoc）
+- 注释解释 **"为什么"**，不是 **"做什么"**（代码已经说了做什么）
+- 禁止注释掉的代码块（用 git history 追溯）
+- TODO 注释必须包含负责人和日期：`// TODO(haojie.liu, 2026-07-01): reason`
+
+## 不可变性规范
+
+- 所有数据对象默认为不可变（Immutable）
+- 修改操作返回新对象，不修改原对象
+- 集合类型的 getter 返回不可修改视图或副本
+- 禁止在非构造函数中修改 final/readonly 字段
+
+## 测试规范
+
+- 复杂业务逻辑（多分支/状态机/算法）→ TDD 先行
+- 简单 CRUD → AI 生成后验证
+- 存量代码修改 → 先补充保护性测试再修改
+- AI 禁止修改已有测试代码
+- AI 禁止跳过 Red-Green-Refactor 任一阶段

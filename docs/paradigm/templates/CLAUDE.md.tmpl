@@ -1,0 +1,99 @@
+# {{PROJECT_NAME}}
+
+> {{PROJECT_DESCRIPTION}}
+
+## 架构约束（Always Rules）
+
+<!--
+  [HUMAN-NEEDED] 以下架构约束需要团队核心开发确认后填入。
+  删除不需要的条目，补充项目特有的约束。
+  原则：宁少勿多，3-5条即可。AI 遵守每条规则的精确度与规则数量成反比。
+-->
+
+### 分层架构
+- **分层规则**: {{LAYERING_RULES | 例: Starter → Application → Infrastructure → Common，禁止反向依赖}}
+- **依赖方向**: {{DEPENDENCY_DIRECTION | 例: Infrastructure 依赖 Common，Application 不依赖 Infrastructure 的实现}}
+- **数据传递**: {{DATA_TRANSFER_RULES | 例: 跨层传递必须使用 DTO，禁止 Entity 直接暴露到 Controller 层}}
+
+### 模块边界
+- **模块职责**: {{MODULE_RESPONSIBILITIES | 例: order 模块不直接调用 payment 模块的 Repository}}
+- **共享逻辑**: {{SHARED_LOGIC_RULES | 例: 两个以上模块共用的逻辑提取到 Common 层}}
+
+## 编码规范（Always Rules）
+
+<!-- [HUMAN-NEEDED] 选择适用的规范，删除不适用的。-->
+
+### 代码清理规则（防止死代码累积）
+- **"替换"必须是完整替换**：用新实现替换旧实现时，必须在同一个 PR 中删除旧代码。禁止"先上新、后删旧"分两阶段。
+- **删前检查引用**：删除任何公开类/方法前，用 codegraph_callers 确认无残留调用。如有，先迁移引用再删除。
+- **配置同步清理**：删除代码的同时删除对应的配置项、注解、XML 映射、import 语句。
+- **禁止注释保留旧代码**：废弃代码用 git 删除（history 可追溯），不用注释包裹。
+
+### 函数与方法
+- 单个函数不超过 **{{MAX_FUNCTION_LINES | 50}}** 行
+- 单个文件不超过 **{{MAX_FILE_LINES | 500}}** 行
+- 嵌套深度不超过 **{{MAX_NESTING | 4}}** 层
+- 禁止使用标志参数切换逻辑（违反单一职责）
+
+### 类型与接口
+- 禁止使用 `Any` / `unknown` / 泛型类型滥用
+- 所有函数必须标注返回值类型
+- 复杂数据结构必须有独立的类型定义
+- {{TYPE_SPECIFIC_RULES | 例: 禁止使用 JSONObject，优先用序列化/反序列化}}
+
+### 不可变性
+- 禁止修改入参，必须返回新对象
+- 禁止修改全局状态
+- 优先使用纯函数
+
+### 错误处理
+- 错误必须显式抛出，禁止静默吞掉
+- catch 块必须包含具体的处理逻辑或重新抛出
+- 错误信息必须包含足够的调试上下文（入参、响应体、状态码）
+- {{ERROR_HANDLING_SPECIFICS | 例: Service 层统一返回 Result<T, AppError>}}
+
+### 命名规范
+- {{NAMING_CONVENTIONS | 例: 类名 PascalCase，方法名 camelCase，常量 UPPER_SNAKE_CASE}}
+
+## 领域知识
+
+<!-- [HUMAN-NEEDED] 仅记录非显而易见的领域知识。-->
+
+### 核心术语
+{{DOMAIN_TERMS | 从 CONTEXT.md 引用或直接列出}}
+
+### 业务规则
+{{BUSINESS_RULES | 例: 订单金额单位为分(cent)，不是元}}
+
+## 技术栈
+
+- **语言/运行时**: {{LANGUAGE_RUNTIME}}
+- **框架**: {{FRAMEWORKS}}
+- **数据库**: {{DATABASE}}
+- **关键依赖**: {{KEY_DEPENDENCIES}}
+
+## 当前技术债
+
+<!-- [HUMAN-NEEDED] 由 tech-debt-scan Skill 自动生成初稿，人类确认优先级。 -->
+
+详见 [.claude/tech-debt.md](.claude/tech-debt.md)
+
+## Skill 注册表
+
+<!-- [AI-AUTO] AI 初始化时自动注册已安装的 Skill。 -->
+
+| Skill | 触发方式 | 用途 |
+|-------|---------|------|
+| `/pre-pr-check` | 提交 PR 前 | 多维度 AI 自查，过滤基础问题 |
+| `/tech-debt-scan` | 按需 | 穷举扫描技术债，自动分级 |
+| `/multi-model-review` | 重要 PR | 多模型对抗审查 |
+| `/sop-from-master` | 主R完成后 | 从主R操作记录生成 SOP |
+| `/tdd` | 开发新功能/修 Bug | 测试驱动开发循环 |
+
+## 测试策略
+
+<!-- [HUMAN-NEEDED] 团队对测试的共识 -->
+
+- {{TEST_STRATEGY | 例: 复杂业务逻辑走 TDD，简单 CRUD 先实现后验证}}
+- {{TEST_FRAMEWORK | 例: JUnit 5 + Mockito}}
+- **AI 行为准则**：禁止修改已有测试代码，禁止跳过 Red 阶段

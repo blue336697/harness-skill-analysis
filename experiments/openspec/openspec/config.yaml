@@ -1,0 +1,35 @@
+schema: spec-driven
+
+context: |
+  Project: TaskFlow API - A task management REST API for a seed-stage startup
+  Tech stack: TypeScript 5.x strict mode, Node.js 20 LTS, Express.js 4.x
+  Package manager: pnpm
+  Test framework: Node.js built-in node:test + node:assert
+  Runtime: tsx for development
+
+  Architecture principles:
+  - Functional programming preferred over OOP
+  - Immutable data patterns
+  - Pure functions, no side effects in business logic
+  - Strict TypeScript types, no any/unknown
+
+  Coding standards:
+  - Files: 200-400 lines max
+  - Functions: < 50 lines
+  - Nesting: < 4 levels
+  - kebab-case filenames, camelCase functions, PascalCase types
+
+rules:
+  specs:
+    - All API endpoints must follow the ApiResponse envelope format
+    - Task status machine: todo <-> in_progress -> done; done -> todo allowed; todo -> done and done -> in_progress forbidden
+    - All inputs must be validated, fail fast with 400 on invalid input
+    - Use UUID v4 for task IDs
+  design:
+    - Layered architecture: routes -> validators -> services (pure functions)
+    - In-memory storage for MVP (can swap to DB later)
+    - Error handling middleware for centralized error responses
+  tasks:
+    - Write tests BEFORE implementation (TDD approach)
+    - Test using curl commands against running server, never mocks
+    - Each task must be independently verifiable

@@ -1,0 +1,22 @@
+{
+  "version": "1.5.0",
+  "project": "taskflow-api",
+  "schema": "gsd-core",
+  "preferences": {
+    "auto_mode": true,
+    "tdd": true,
+    "code_review": true,
+    "research": true,
+    "plan_validation": true
+  },
+  "tech_stack": {
+    "runtime": "node",
+    "language": "typescript",
+    "framework": "express",
+    "package_manager": "pnpm",
+    "test_framework": "node:test"
+  },
+  "worktree": {
+    "enabled": false
+  }
+}

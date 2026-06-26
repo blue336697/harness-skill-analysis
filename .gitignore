@@ -6,6 +6,3 @@ bash.exe.stackdump
 .vscode/
 *.swp
 .codegraph/
-experiments/
-repos/
-analysis/open-source-agents/repos/

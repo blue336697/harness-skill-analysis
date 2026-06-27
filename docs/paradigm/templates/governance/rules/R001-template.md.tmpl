@@ -1,0 +1,28 @@
+# Rule: {{RULE_NAME}}
+
+<!--
+  使用说明：当 corrections.log 中出现 3+ 条同类偏差时，从 corrections 蒸馏出 Rule。
+  每条 Rule 必须有：追溯 Principle + 判定标准 + 过期条件。
+  控制数量：active rules <= 15 条。超过时需要蒸馏（上提为 principle 或下沉为 gate）。
+-->
+
+## 追溯
+- **Principle**: {{PRINCIPLE_REF | 例: P1（完成度）}}
+- **Evidence**: {{EVIDENCE | 例: corrections.log 中 5 条"跳过边界测试就说 done"}}
+
+## 判定标准
+- [ ] {{CRITERION_1}}
+- [ ] {{CRITERION_2}}
+
+## 违规示例
+```
+❌ {{BAD_EXAMPLE}}
+✅ {{GOOD_EXAMPLE}}
+```
+
+## 过期条件
+- 当 Gate `{{GATE_NAME}}` 连续 {{DAYS}} 天无阻断时，此 rule 可退休
+- 或当 Principle `{{PRINCIPLE_REF}}` 的判定标准已被 agent 完全内化
+
+## 当前级别
+{{LEVEL | L1（AI 自查）/ L2（AI 互查）}}

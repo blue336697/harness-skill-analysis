@@ -1,0 +1,43 @@
+#!/bin/bash
+# {{PROJECT_NAME}} — AgentOS Session Start Hook
+# 触发时机：Claude Code session 启动时
+# 做什么：按优先级注入 Knowledge + Governance 到 context
+# 优雅降级：文件缺失时跳过而非失败
+
+AGENTOS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+# P0: Principles（最高优先级 — 完整注入）
+if [ -f "$AGENTOS_DIR/governance/principles.md" ]; then
+  echo "=== PRINCIPLES (最高优先级约束) ==="
+  cat "$AGENTOS_DIR/governance/principles.md"
+  echo ""
+fi
+
+# P1: 当前项目状态
+if [ -f "$AGENTOS_DIR/knowledge/PROJECT.md" ]; then
+  echo "=== CURRENT STATE ==="
+  head -30 "$AGENTOS_DIR/knowledge/PROJECT.md"
+  echo ""
+fi
+
+# P2: Knowledge DDD 摘要（每份取前 15 行）
+echo "=== DOMAIN KNOWLEDGE (摘要) ==="
+for doc in PRODUCT TECH IMPROVEMENT; do
+  if [ -f "$AGENTOS_DIR/knowledge/$doc.md" ]; then
+    echo "--- $doc ---"
+    head -15 "$AGENTOS_DIR/knowledge/$doc.md"
+    echo "..."
+    echo ""
+  fi
+done
+
+# P3: 禁止事项
+if [ -f "$AGENTOS_DIR/knowledge/IMPROVEMENT.md" ]; then
+  if grep -q "## 禁止事项" "$AGENTOS_DIR/knowledge/IMPROVEMENT.md" 2>/dev/null; then
+    echo "=== 禁止事项 ==="
+    sed -n '/## 禁止事项/,/## /p' "$AGENTOS_DIR/knowledge/IMPROVEMENT.md" | head -10
+    echo ""
+  fi
+fi
+
+echo "--- AgentOS Ready ---"

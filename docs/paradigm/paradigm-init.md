@@ -17,29 +17,38 @@
 
 ```
 项目根目录/
-├── CLAUDE.md                  # [AI-AUTO] 从模板生成，含架构约束+编码规范+领域知识
+├── CLAUDE.md                  # [AI-AUTO] Bootstrap 入口（AgentOS 风格，<60行）
 ├── CONTEXT.md                 # [AI-AUTO] 从模板生成+代码扫描预填充
+├── corrections.log            # [AI-AUTO] 学习循环日志（空文件）
+├── knowledge/                 # [AI-AUTO] AgentOS Knowledge 模块（DDD 四文档）
+│   ├── PRODUCT.md             # [AI-AUTO] 产品知识（预填充+[HUMAN-NEEDED]）
+│   ├── TECH.md                # [AI-AUTO] 技术知识+ADR模板（[HUMAN-NEEDED]）
+│   ├── IMPROVEMENT.md         # [AI-AUTO] 改进方向+禁止事项（[HUMAN-NEEDED]）
+│   └── PROJECT.md             # [AI-AUTO] 项目状态（预填充+[HUMAN-NEEDED]）
+├── governance/                # [AI-AUTO] AgentOS 三层治理
+│   ├── principles.md          # [AI-AUTO] Starter Principles（[HUMAN-NEEDED] 确认）
+│   ├── rules/
+│   │   ├── _retired/          # [AI-AUTO] 退休规则存放
+│   │   └── R001-*.md          # [AI-AUTO] 示例 rule 模板
+│   └── gates/
+│       ├── _graduated/        # [AI-AUTO] 毕业门禁存放
+│       └── check-*.sh         # [AI-AUTO] 示例 gate 脚本
+├── hooks/                     # [AI-AUTO] 生命周期钩子
+│   ├── on-session-start.sh    # [AI-AUTO] 知识注入
+│   └── on-session-end.sh      # [AI-AUTO] corrections 捕获
+├── eval/                      # [AI-AUTO] 行为验证
+│   ├── golden-set.md          # [AI-AUTO] 行为契约模板（[HUMAN-NEEDED]）
+│   └── run-eval.sh            # [AI-AUTO] 质量评估脚本
 ├── .claude/
-│   ├── tech-debt.md           # [AI-AUTO] 初始为空模板
+│   ├── tech-debt.md           # [AI-AUTO] 技术债跟踪
 │   ├── rules/
 │   │   ├── architecture.md    # [HUMAN-NEEDED] 团队共识后填充
 │   │   └── coding-standards.md # [HUMAN-NEEDED] 团队共识后填充
-│   ├── skills/                # [AI-AUTO] 安装 Skill（自定义必装 + 外部搜索后安装）
-│   │   ├── pre-pr-check/SKILL.md       # 自定义：Pre-PR自查
-│   │   ├── tech-debt-scan/SKILL.md     # 自定义：技术债扫描
-│   │   ├── multi-model-review/SKILL.md # 自定义：多模型审查
-│   │   ├── sop-from-master/SKILL.md    # 自定义：SOP生成
-│   │   ├── brainstorming/SKILL.md      # Superpowers（如本地有）
-│   │   ├── writing-plans/SKILL.md      # Superpowers（如本地有）
-│   │   ├── subagent-driven-development/SKILL.md  # Superpowers（如本地有）
-│   │   ├── tdd/SKILL.md                # Matt Pocock（如本地有）
-│   │   └── ...                         # 其他搜索到的 Skill
-│   └── sops/                  # [AI-AUTO] 创建空目录，后续用 /sop-from-master 填充
-│       └── archive/
+│   ├── skills/                # [AI-AUTO] Skill 目录
+│   ├── sops/                  # [AI-AUTO] SOP 目录
+│   ├── settings.json          # [AI-AUTO] Hook + Skill 注册
 ├── docs/
-│   └── adr/                   # [AI-AUTO] 创建空目录
-└── .claude/
-    └── settings.json          # [AI-AUTO] 仅追加 Skill 注册，不覆盖已有配置
+│   └── adr/                   # [AI-AUTO] ADR 目录
 ```
 
 ---
@@ -109,10 +118,19 @@
 > **[AI-AUTO] 无需人类参与。**
 
 ```bash
+# 原有目录
 mkdir -p .claude/rules
 mkdir -p .claude/skills
 mkdir -p .claude/sops/archive
 mkdir -p docs/adr
+
+# AgentOS 模块目录
+mkdir -p knowledge
+mkdir -p governance/rules/_retired
+mkdir -p governance/gates/_graduated
+mkdir -p hooks
+mkdir -p eval
+touch corrections.log
 ```
 
 确认所有目录创建成功后进入 Phase 2。
@@ -203,7 +221,100 @@ D:/claudeProjects/harness-skill-analysis/docs/paradigm/skills/
 👉 未安装的 Skill 不阻塞初始化。可以在初始化完成后手动补充。
 ```
 
-**注意**：找不到的 Skill 不阻塞初始化。继续进入 Phase 3。
+**注意**：找不到的 Skill 不阻塞初始化。继续进入 Phase 2.5。
+
+---
+
+## Phase 2.5: 生成 Knowledge 四文档
+
+> **[AI-AUTO] 基于 Phase 0 的环境检测结果，预填充 DDD 四文档。**
+> 模板源路径: `D:/claudeProjects/harness-skill-analysis/docs/paradigm/templates/knowledge/`
+
+### 2.5.1 生成 PRODUCT.md
+
+**模板**：`templates/knowledge/PRODUCT.md.tmpl`
+**AI 自动填充**：项目名、用户群体（从项目类型推测）
+**保留为 [HUMAN-NEEDED]**：核心问题、业务规则、质量标准
+
+### 2.5.2 生成 TECH.md
+
+**模板**：`templates/knowledge/TECH.md.tmpl`
+**AI 自动填充**：技术栈（从 Phase 0 检测结果）
+**保留为 [HUMAN-NEEDED]**：ADR 记录、接口契约
+
+### 2.5.3 生成 IMPROVEMENT.md
+
+**模板**：`templates/knowledge/IMPROVEMENT.md.tmpl`
+**AI 自动填充**：优先级（从 Phase 3 的 tech-debt 扫描结果中提取 top-3）
+**保留为 [HUMAN-NEEDED]**：禁止事项、中远期改进方向
+
+### 2.5.4 生成 PROJECT.md
+
+**模板**：`templates/knowledge/PROJECT.md.tmpl`
+**AI 自动填充**：当前阶段（从 git history 推测）、进行中/待办（从 git log 和分支推测）
+**保留为 [HUMAN-NEEDED]**：阻塞事项确认
+
+---
+
+## Phase 2.6: 生成 Governance 骨架
+
+> **[AI-AUTO] 生成三层治理的初始骨架。Principles 用 Starter 模板，团队共识后替换。**
+
+### 2.6.1 生成 principles.md
+
+**模板**：`templates/governance/principles.md.tmpl`
+**AI 自动填充**：根据 Phase 0 检测的项目类型，从模板的"Starter Principles 参考"中选择 3 条最匹配的。例如：
+- 后端项目 → P_完成度 + P_可追溯 + P_数据质量
+- 前端项目 → P_完成度 + P_可追溯 + P_用户可见
+**保留为 [HUMAN-NEEDED]**：团队必须确认/修改/替换这 3 条 Starter Principles
+
+### 2.6.2 为已有 rules 添加 Principle 追溯
+
+检查 `.claude/rules/architecture.md` 和 `.claude/rules/coding-standards.md`（如已从模板生成），在文件头部添加：
+```markdown
+> **追溯 Principle**: ___（团队共识后填写）
+```
+这样当 principles 确定后，所有 rules 都有明确的追溯链。
+
+### 2.6.3 生成示例 rule 模板
+
+**模板**：`templates/governance/rules/R001-template.md.tmpl`
+**操作**：复制到 `governance/rules/R001-example.md`，作为团队后续从 corrections 蒸馏新 rule 时的参考模板。标注 `[HUMAN-NEEDED]`。
+
+---
+
+## Phase 2.7: 生成 Hooks + Eval
+
+> **[AI-AUTO] 生成 Session 生命周期 hook 和行为验证基础设施。**
+
+### 2.7.1 生成 SessionStart Hook
+
+**模板**：`templates/hooks/on-session-start.sh.tmpl`
+**操作**：复制到 `hooks/on-session-start.sh`，替换 `{{PROJECT_NAME}}`。
+```bash
+chmod +x hooks/on-session-start.sh
+```
+
+### 2.7.2 生成 SessionEnd Hook
+
+**模板**：`templates/hooks/on-session-end.sh.tmpl`
+**操作**：复制到 `hooks/on-session-end.sh`，替换 `{{PROJECT_NAME}}`。
+```bash
+chmod +x hooks/on-session-end.sh
+```
+
+### 2.7.3 生成 Eval 行为契约
+
+**模板**：`templates/eval/golden-set.md.tmpl`
+**操作**：复制到 `eval/golden-set.md`。
+**保留为 [HUMAN-NEEDED]**：团队讨论后填写项目特定的行为契约。
+
+### 2.7.4 更新 .claude/settings.json 注册 Hooks
+
+**模板**：`templates/.claude/settings.json.tmpl`
+**操作**：
+- 如果 `.claude/settings.json` 已有内容，**仅追加 hooks 字段**，保留已有配置
+- 如果不存在，直接使用模板创建
 
 ---
 
@@ -293,19 +404,34 @@ D:/claudeProjects/harness-skill-analysis/docs/paradigm/skills/
 ```markdown
 ## Phase 4 完成：文件生成报告
 
-### ✅ 已创建/更新
+### ✅ 已创建/更新（AgentOS 模块）
 | 文件 | 状态 | AI 填充度 |
 |------|------|----------|
-| CLAUDE.md | ✅ | 60%（技术栈已填，架构规范待人类确认） |
+| knowledge/PRODUCT.md | ✅ | 30%（项目名已填，核心问题待人类确认） |
+| knowledge/TECH.md | ✅ | 50%（技术栈已填，ADR待人类确认） |
+| knowledge/IMPROVEMENT.md | ✅ | 20%（待 Phase 3 分析后回填） |
+| knowledge/PROJECT.md | ✅ | 40%（git 状态已推测，待人类确认） |
+| governance/principles.md | ✅ | 60%（3条Starter已选，待人类确认/替换） |
+| governance/rules/R001-example.md | ✅ | 0%（模板复制，待从corrections蒸馏） |
+| hooks/on-session-start.sh | ✅ | 已可执行 |
+| hooks/on-session-end.sh | ✅ | 已可执行 |
+| eval/golden-set.md | ✅ | 40%（通用条款已填，项目特定待人类） |
+| corrections.log | ✅ | 空文件就绪 |
+
+### ✅ 已创建/更新（原有模块）
+| 文件 | 状态 | AI 填充度 |
+|------|------|----------|
+| CLAUDE.md | ✅ | 60%（技术栈+Skills已填，架构规范待人类确认） |
 | CONTEXT.md | ✅ | 30%（候选术语已填，定义待人类确认） |
 | .claude/tech-debt.md | ✅ | 70%（债务已列出，优先级待人类确认） |
 | .claude/rules/architecture.md | ✅ | 40%（默认建议已填，具体规则待人类确认） |
 | .claude/rules/coding-standards.md | ✅ | 50%（已根据代码风格预填，待人类确认） |
-| .claude/skills/* | ✅ 4个Skill已安装 | 100% |
+| .claude/skills/* | ✅ | 100%（Skill已安装） |
 
 ### ⚠️ 待人类处理
-- 5 个文件中共有 N 处 `[HUMAN-NEEDED]` 标记
+- AgentOS 和原有模块共 N 处 `[HUMAN-NEEDED]` 标记
 - P0/P1 债务清单待确认
+- Starter Principles 待团队共识会议确认
 
 👉 进入 Phase 5（需人类参与）...
 ```
@@ -345,6 +471,11 @@ AI 建议：[列出 Phase 3.4 的 P0/P1 清单]
 
 ## 议程 5: 团队工作流约定（15 min）
 待决策：Pre-PR Check 是否强制 / 多模型 Review 触发条件 / 测试策略
+
+## 议程 6: Principles 共识（20 min）★ AgentOS 新增
+待决策：确认/修改/替换 AI 建议的 3-5 条原则
+目标产出：每条 principle 可判定 + 有"自检"问题（删除它 agent 会犯什么错？）
+参考：`governance/principles.md` 中的 Starter Principles
 ```
 
 ### 5.2 AI 等待人类输入
@@ -376,6 +507,17 @@ AI 建议：[列出 Phase 3.4 的 P0/P1 清单]
 - CLAUDE.md vs .claude/rules/coding-standards.md 的规范一致性
 - CONTEXT.md vs CLAUDE.md 的术语一致性
 - tech-debt.md 中的问题是否能被现有规则所约束
+
+### 6.2b AgentOS 模块一致性验证（新增）
+
+检查 AgentOS 模块的完整性：
+- [ ] `governance/principles.md` 中的每条 principle 是否可判定？（能回答"做到了没有"）
+- [ ] `.claude/rules/` 中的每个 rule 是否都有 Principle 追溯行？
+- [ ] `knowledge/` 四文档是否都存在且没有空占位符？
+- [ ] `hooks/on-session-start.sh` 和 `hooks/on-session-end.sh` 是否可执行？
+- [ ] `.claude/settings.json` 中是否已注册 SessionStart 和 SessionEnd hook？
+- [ ] `corrections.log` 是否存在？
+- [ ] `governance/principles.md` 中的 starter principles 与项目类型是否匹配？
 
 ### 6.3 规则可执行性验证
 
@@ -420,9 +562,24 @@ AI 建议：[列出 Phase 3.4 的 P0/P1 清单]
 
 ## 附录 A: 文件对照表
 
+### AgentOS 模块模板（新增）
 | 范式源文件 | 目标项目文件 | 生成方式 |
 |-----------|-------------|---------|
-| `templates/CLAUDE.md.tmpl` | `CLAUDE.md` | AI 基于模板生成 + 代码分析预填充 |
+| `templates/knowledge/PRODUCT.md.tmpl` | `knowledge/PRODUCT.md` | AI 基于模板 + Phase 0 检测预填充 |
+| `templates/knowledge/TECH.md.tmpl` | `knowledge/TECH.md` | AI 基于模板 + 技术栈自动填充 |
+| `templates/knowledge/IMPROVEMENT.md.tmpl` | `knowledge/IMPROVEMENT.md` | AI 基于模板 + Phase 3 债务扫描 |
+| `templates/knowledge/PROJECT.md.tmpl` | `knowledge/PROJECT.md` | AI 基于模板 + git history 推测 |
+| `templates/governance/principles.md.tmpl` | `governance/principles.md` | AI 选择 3 条 Starter + 人类确认 |
+| `templates/governance/rules/R001-template.md.tmpl` | `governance/rules/R001-example.md` | AI 复制为参考模板 |
+| `templates/hooks/on-session-start.sh.tmpl` | `hooks/on-session-start.sh` | AI 复制 + `chmod +x` |
+| `templates/hooks/on-session-end.sh.tmpl` | `hooks/on-session-end.sh` | AI 复制 + `chmod +x` |
+| `templates/eval/golden-set.md.tmpl` | `eval/golden-set.md` | AI 基于模板 + 人类补项目特定 |
+| `templates/.claude/settings.json.tmpl` | `.claude/settings.json`（追加 hooks） | AI 读现有 + 追加 hooks 字段 |
+
+### 原有模板（保持不变）
+| 范式源文件 | 目标项目文件 | 生成方式 |
+|-----------|-------------|---------|
+| `templates/CLAUDE.md.tmpl` | `CLAUDE.md` | AI 基于模板生成（AgentOS bootstrap 风格） |
 | `templates/CONTEXT.md.tmpl` | `CONTEXT.md` | AI 基于模板生成 + 候选术语预填充 |
 | `templates/tech-debt.md.tmpl` | `.claude/tech-debt.md` | AI 扫描生成 + 人类确认优先级 |
 | `templates/rules/architecture.md.tmpl` | `.claude/rules/architecture.md` | AI 基于模板 + 技术栈适配 + 人类填共识 |

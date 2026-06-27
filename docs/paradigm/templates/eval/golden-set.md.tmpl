@@ -1,0 +1,30 @@
+# Behavioral Contract — {{PROJECT_NAME}} 行为测试
+
+<!--
+  [HUMAN-NEEDED] 团队共识后填写。
+  格式: IF agent 做了 X THEN Y 必须成立。
+  每条必须是可自动验证或可人工判定的。
+-->
+
+## 完成度行为
+- IF agent 声称完成一个功能
+  THEN 测试必须存在且通过
+  AND >= 3 种边界/异常情况已覆盖
+
+## Principles 引用
+- IF agent 做了设计决策
+  THEN 决策记录在 ADR 或 commit message 中有 rationale
+
+## Gate 效果
+- IF agent 提交代码
+  THEN pre-pr-check 通过（无 CRITICAL）
+  AND lint 通过
+
+## 蒸馏方向
+- IF corrections.log 有 3+ 条同类 correction
+  THEN governance/ 中应有对应 rule 或 principle
+  AND 已有 rule 覆盖但仍频繁出现 → 下沉为 gate 脚本
+
+## {{PROJECT_NAME}} 特定契约
+- IF {{TRIGGER_CONDITION}}
+  THEN {{EXPECTED_BEHAVIOR}}

@@ -1,0 +1,21 @@
+#!/bin/bash
+# {{PROJECT_NAME}} — AgentOS Session End Hook
+# 触发时机：Claude Code session 结束时
+# 做什么：提取 corrections / decisions / discoveries，追加到 corrections.log
+# 优雅降级：claude --print 不可用时静默跳过
+
+AGENTOS_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+if ! command -v claude &> /dev/null; then
+  exit 0
+fi
+
+claude --print "Review this session transcript.
+Extract:
+1. Any corrections the user made about code or design (format: CORRECTION: <description>)
+2. Any design decisions made with rationale (format: DECISION: <description>)
+3. Any new facts discovered about the codebase (format: DISCOVERY: <description>)
+4. Any quality issues — skipped tests, missing error handling, hardcoded values, etc. (format: QUALITY_ISSUE: <description>)
+
+Output ONLY the extracted items, one per line. If none found, output NONE." \
+  >> "$AGENTOS_DIR/corrections.log" 2>/dev/null || true

@@ -1,0 +1,67 @@
+# Principles（按优先级排序）
+
+<!--
+  [HUMAN-NEEDED] 以下 3 条 Starter Principles 是 AI 根据项目类型建议的通用原则。
+  团队必须在共识会议上：确认 / 修改 / 替换。
+
+  ★ 核心标准：每条 principle 必须可判定——能明确回答"做到了没有"。
+  ★ 自检方法：删掉这条 principle，agent 会犯什么错？如果答不上来，这条就是多余的。
+  ★ 数量控制：3-5 条。超过 5 条说明你在写 rules，不是在写 principles。
+-->
+
+---
+
+## P1: {{PRINCIPLE_1_NAME}}
+**{{PRINCIPLE_1_CORE_IDEA}}**
+
+### 判定标准
+- [ ] {{CRITERION_1A}}
+- [ ] {{CRITERION_1B}}
+
+### 自检
+> 如果删掉这条 principle，agent 会犯什么错？
+> → {{SELF_CHECK_1}}
+
+---
+
+## P2: {{PRINCIPLE_2_NAME}}
+**{{PRINCIPLE_2_CORE_IDEA}}**
+
+### 判定标准
+- [ ] {{CRITERION_2A}}
+- [ ] {{CRITERION_2B}}
+
+### 自检
+> → {{SELF_CHECK_2}}
+
+---
+
+## P3: {{PRINCIPLE_3_NAME}}
+**{{PRINCIPLE_3_CORE_IDEA}}**
+
+### 判定标准
+- [ ] {{CRITERION_3A}}
+- [ ] {{CRITERION_3B}}
+
+### 自检
+> → {{SELF_CHECK_3}}
+
+---
+
+## Starter Principles 参考（按项目类型）
+
+<!-- [AI-AUTO] 根据 Phase 0 检测的项目类型，从下方选择 3 条最匹配的作为 Starter -->
+
+### 通用（所有项目推荐）
+- **P_完成度**："完成 = 我主动尝试破坏它且失败了，不是'我没发现明显问题'"
+  - 判定：每个 PR 有 >=3 种边界/异常测试；关键逻辑有反向测试
+- **P_可追溯**："每个决策都能回答'为什么这样做'"
+  - 判定：ADR 覆盖所有不可逆决策；关键代码变更有 commit body 解释
+
+### 后端项目补充
+- **P_数据质量**："宁可拒绝也不放脏数据进入系统"
+  - 判定：所有 API 入口有 schema 验证；数据库约束与代码校验一致
+
+### 前端项目补充
+- **P_用户可见**："每个变更的可观察效果在 PR 描述中可见"
+  - 判定：UI 变更附截图/录屏；API 变更附请求响应示例

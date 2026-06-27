@@ -8,16 +8,17 @@
 
 ## 设计理念
 
-美团两篇文章讲了"做什么"但没讲"怎么做"。本项目将方法论翻译为 Claude Code 的 5 层原生机制：
+美团两篇文章讲了"做什么"但没讲"怎么做"。本项目将方法论翻译为 Claude Code 的 5 层原生机制，并融入 AgentOS 的三层治理（Principles → Rules → Gates）+ 蒸馏循环（corrections.log → 上提/下沉/毕业）让规则能持续进化：
 
 | 美团概念 | Claude Code 映射 | 本范式文件 |
 |---------|-----------------|-----------|
-| AI Rule（always级别） | `CLAUDE.md` + `.claude/rules/` | `templates/` 目录 |
+| AI Rule（always级别） | `CLAUDE.md` + `governance/` + `.claude/rules/` | `templates/` 目录 |
 | Skill（渐进式加载） | `/skill` 机制 | `skills/` 目录 |
 | Pre-PR AI 自查 | `/pre-pr-check` Skill | `skills/pre-pr-check/SKILL.md` |
 | 多模型对抗审核 | sub-agent 多 model 参数 | `skills/multi-model-review/SKILL.md` |
 | 技术债穷举扫描 | `/tech-debt-scan` Skill | `skills/tech-debt-scan/SKILL.md` |
 | 主R打样→SOP→并行 | `/sop-from-master` Skill | `skills/sop-from-master/SKILL.md` |
+| **治理持续进化** ★ | Principles → Rules → Gates + corrections 蒸馏 | `templates/governance/` + `templates/hooks/` |
 
 **不构建自定义 Harness**。Claude Code 原生的 Skills + Rules + Hooks 已经图灵完备。自定义 Harness（如 OpenSpec 的 CLI 工具）只在需要跨工具兼容时有价值。
 
@@ -27,14 +28,30 @@
 docs/paradigm/
 ├── README.md                         # 本文件：概述和使用说明
 ├── paradigm-init.md                  # ★ 核心：AI 自举指令（给 AI 看的）
+├── harness-usage-guide.md            # 团队日常使用手册
 ├── templates/                        # 项目文件模板（含 {{PLACEHOLDER}}）
-│   ├── CLAUDE.md.tmpl
+│   ├── CLAUDE.md.tmpl                # Bootstrap 入口（AgentOS 风格）
 │   ├── CONTEXT.md.tmpl
 │   ├── tech-debt.md.tmpl
+│   ├── .claude/settings.json.tmpl    # Hook 注册配置
+│   ├── knowledge/                    # ★ AgentOS Knowledge 模板
+│   │   ├── PRODUCT.md.tmpl
+│   │   ├── TECH.md.tmpl
+│   │   ├── IMPROVEMENT.md.tmpl
+│   │   └── PROJECT.md.tmpl
+│   ├── governance/                   # ★ AgentOS Governance 模板
+│   │   ├── principles.md.tmpl        # Starter Principles 模板
+│   │   └── rules/
+│   │       └── R001-template.md.tmpl # 规则模板（从 corrections 蒸馏）
+│   ├── hooks/                        # ★ AgentOS 生命周期模板
+│   │   ├── on-session-start.sh.tmpl
+│   │   └── on-session-end.sh.tmpl
+│   ├── eval/                         # ★ AgentOS 行为验证模板
+│   │   └── golden-set.md.tmpl
 │   └── rules/
 │       ├── architecture.md.tmpl
 │       └── coding-standards.md.tmpl
-└── skills/                           # 4 个自定义 Skill（直接复制到目标项目）
+└── skills/                           # 4 个自定义 Skill
     ├── pre-pr-check/SKILL.md
     ├── tech-debt-scan/SKILL.md
     ├── multi-model-review/SKILL.md
@@ -76,15 +93,45 @@ AI 将自动执行：
 | 重要 PR 审查 | `/multi-model-review` | 3 个不同模型并行审查 → 交叉验证 → 合并报告 |
 | 主R完成后 | `/sop-from-master` | 从 git history 提取模式 → 生成可复用 SOP |
 
-## 5 层架构
+## 5 层架构（已融入 AgentOS 三层治理）
 
 ```
-第5层：度量层 → cost-report、质量趋势、技术债变化（反馈闭环）
-第4层：知识层 → CONTEXT.md、ADR、Memory、.claude/rules/（跨会话持久化）
-第3层：质量门禁 → Pre-PR Hook、多模型对抗、测试基线检查（自动化执法）
+第5层：度量层 → eval/run-eval.sh、corrections.log、cost-report（反馈闭环）
+第4层：知识层 → knowledge/ (PRODUCT/TECH/IMPROVEMENT/PROJECT)、CONTEXT.md、ADR
+第3层：质量门禁 → governance/gates/、pre-pr-check、多模型对抗（自动化执法）
 第2层：流程层 → /pre-pr-check、/tech-debt-scan、/multi-model-review、/sop-from-master
-第1层：约束层 → CLAUDE.md、编码规范、分层架构、领域模型（Always 加载）
+第1层：约束层 → governance/principles.md（最高优先级）、.claude/rules/、CLAUDE.md
+
+AgentOS 蒸馏循环：corrections.log → 识别 pattern → 上提(Rule→Principle) / 下沉(Rule→Gate) / 毕业(Gate不触发)
 ```
+
+## AgentOS 机制：让规则持续进化
+
+本范式从 AgentOS 工程实践中引入了三个关键机制，解决"规则写好就腐烂"的问题：
+
+### Principles（原则层）
+
+Rule 告诉你"怎么做"，Principle 告诉你"为什么"。Principles 是最高约束，所有 Rules 和 Gates 都追溯到这里。
+
+- **3-5 条可判定原则**：每条能明确回答"做到了没有"
+- **自检问题**："删掉这条 principle，agent 会犯什么错？"
+- **不预设**：初始化时 AI 从 Starter 模板中选择，团队必须在共识会议上确认/替换
+
+### Corrections 蒸馏循环
+
+这是 AgentOS 与普通模板系统最本质的区别：
+
+```
+Session 中纠正 agent → SessionEnd hook 写入 corrections.log
+    → 积累 15-20 条后做蒸馏
+        → 上提：3+ rules 同根因 → 写 principle，退休 rules
+        → 下沉：rule 被违反 3+ 次 → 变 gate 脚本，退休 rule
+        → 毕业：gate 30 天未触发 → 移入 _graduated/
+```
+
+### 行为验证
+
+`eval/golden-set.md` 定义 IF-THEN 行为契约，`eval/run-eval.sh` 自动化检查。初始化时生成模板，团队共识后填入项目特定契约。
 
 ## 与现有 Skills 组合方案的关系
 

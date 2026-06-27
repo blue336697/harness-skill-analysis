@@ -635,3 +635,62 @@ A: 三个硬指标：
 │  重构             → /tech-debt-scan → 主R → SOP → 铺开  │
 └─────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 八、AgentOS 治理：让规则持续进化 ★
+
+> 前面的章节告诉你"怎么用好现有 Skill 和 Rules"。这一节告诉你"怎么让 Rules 自己变好"。机制来自 [AgentOS 工程实践](../LAB-MANUAL.md)。
+
+### 8.1 你的项目有三层治理
+
+```
+Principles（3-5 条可判定原则）
+  ↕ 上提：3+ rules 同根因 → 精炼 principle
+Rules（有限数量，可追溯，可过期）
+  ↕ 下沉：rule 被反复违反 → 变 gate 脚本
+Gates（最少数量，代码阻断，可毕业）
+  ↕ 毕业：gate 30 天不触发 → 移入 _graduated/
+```
+
+- `governance/principles.md` — 最高优先级约束，SessionStart 自动注入
+- `governance/rules/` — 从 corrections 蒸馏出的具体规则，每条有追溯 + 过期条件
+- `governance/gates/` — 自动化检查脚本，`check-*.sh` 失败 = 阻断
+
+### 8.2 怎么用 corrections 驱动改进
+
+**你不需要做任何事**。SessionEnd hook 自动分析 transcript 写入 `corrections.log`：
+```
+CORRECTION: 跳过了 edge case 测试就说 done
+DECISION: 选用 DynamoDB 单表设计而非 RDS（读多写少）
+DISCOVERY: PaymentClient timeout 必须 >= 30s（银行端 SLA 25s）
+QUALITY_ISSUE: 改了 schema 没更新文档
+```
+
+积累 15-20 条后做蒸馏。
+
+### 8.3 蒸馏三招
+
+| 信号 | 招式 | 动作 |
+|------|------|------|
+| 3+ 条同类 CORRECTION，已有 rule 但仍出现 | **下沉** | rule → gate 脚本，rule 移入 `_retired/` |
+| 3+ 条 rules 同根因 | **上提** | 写/强化 principle，退休这些 rules |
+| gate 30 天未触发 | **毕业** | gate 移入 `_graduated/` |
+
+### 8.4 健康信号
+
+| 健康 | 生病 |
+|------|------|
+| governance 文件变短 | governance 文件膨胀 |
+| Gate 触发趋零 | 每个新错要新 gate |
+| Rules 有退休 | Rules 只加不减 |
+| corrections 频率下降 | corrections 频率不变或上升 |
+
+### 8.5 渐进放权
+
+```
+Week 1: 人看着跑（手动检查）
+Week 2: 自动化 gate 降为 L1
+Week 3: AI 自查 gate 降为 L1
+Week 4+: 逐步放开 bugfix loop
+```
